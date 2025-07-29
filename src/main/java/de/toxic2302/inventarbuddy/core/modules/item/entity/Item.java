@@ -1,21 +1,23 @@
 package de.toxic2302.inventarbuddy.core.modules.item.entity;
 
 import de.toxic2302.inventarbuddy.base.entity.BaseEntity;
+import de.toxic2302.inventarbuddy.core.modules.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 
 @Entity
 @Table(name = "items")
 @Getter
 @Setter
+@AllArgsConstructor
 public class Item extends BaseEntity {
 
-  // ---- Globales ----
   @Column
   @NotNull
   private String name;
@@ -30,19 +32,14 @@ public class Item extends BaseEntity {
   @Column(length = 10000)
   private String description;
 
-  /*@ManyToOne
-  @JoinColumn(name = "user_id")
-  private User user;*/
-  @Column
-  private Long userId;
+  @ManyToOne
+  private User user;
 
   @Column
   private Boolean sold;
 
-  // ---- Constructor ----
+  @Column
+  private String firmwareVersion;
+
   public Item() {}
-  public Item(String name, OAuth2User user) {
-    this.name = name;
-    this.userId = user.getAttribute("id");
-  }
 }

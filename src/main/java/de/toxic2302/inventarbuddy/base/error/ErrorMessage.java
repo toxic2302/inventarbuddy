@@ -1,4 +1,4 @@
-package de.toxic2302.inventarbuddy.base;
+package de.toxic2302.inventarbuddy.base.error;
 
 import lombok.Value;
 

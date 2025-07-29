@@ -12,9 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,14 +35,14 @@ public class ItemController {
 
   // ---- Functions ----
   @GetMapping("/items")
-  Collection<ItemDto> items(@AuthenticationPrincipal OidcUser user) {
+  Collection<ItemDto> items() {
     return itemService.getAllItems();
   }
 
-  @GetMapping("/items/{userId}")
-  Collection<ItemDto> itemsByUserId(@PathVariable String userId, @AuthenticationPrincipal OidcUser user) {
+  /*@GetMapping("/items/{userId}")
+  Collection<ItemDto> itemsByUserId(@PathVariable String userId) {
     return itemService.getAllItemsByUser(userId);
-  }
+  }*/
 
   @GetMapping("/item/{id}")
   ResponseEntity<?> getItem(@PathVariable UUID id) {
@@ -54,7 +51,7 @@ public class ItemController {
   }
 
   @PostMapping("/item")
-  ResponseEntity<ItemDto> createItem(@Valid @RequestBody ItemDto item, @AuthenticationPrincipal OAuth2User user) throws URISyntaxException {
+  ResponseEntity<ItemDto> createItem(@Valid @RequestBody ItemDto item) throws URISyntaxException {
     log.info("Request to create item: {}", item);
 
     final ItemDto itemDto = itemService.saveItem(item);

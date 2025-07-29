@@ -12,7 +12,7 @@ public class AuditorAwareHandler implements AuditorAware<String> {
     // ---- Functions ----
     @Override @NonNull
     public Optional<String> getCurrentAuditor() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || ! authentication.isAuthenticated()) {
             return Optional.empty();

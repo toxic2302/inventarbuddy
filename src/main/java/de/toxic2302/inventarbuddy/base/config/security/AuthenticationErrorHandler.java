@@ -1,7 +1,7 @@
 package de.toxic2302.inventarbuddy.base.config.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.toxic2302.inventarbuddy.base.ErrorMessage;
+import de.toxic2302.inventarbuddy.base.error.ErrorMessage;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
