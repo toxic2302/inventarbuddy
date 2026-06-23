@@ -1,43 +1,53 @@
 package de.toxic2302.inventarbuddy.base.config.security;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
-@Configuration
-@RequiredArgsConstructor
+@Profile("!local")
 @EnableMethodSecurity
+@Configuration
 public class SecurityConfig {
 
-    private final AuthenticationErrorHandler authenticationErrorHandler;
-
-    @Bean
-    public SecurityFilterChain httpSecurity(final HttpSecurity http) throws Exception {
-        return http
-            .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/api/*").authenticated()
-                .anyRequest().permitAll())
-            .cors(Customizer.withDefaults())
-            .oauth2ResourceServer(oauth2 -> oauth2
-                .jwt(jwt -> jwt.jwtAuthenticationConverter(makePermissionsConverter()))
-                .authenticationEntryPoint(authenticationErrorHandler))
-            .build();
+    public SecurityConfig() {
     }
 
-    private JwtAuthenticationConverter makePermissionsConverter() {
-        final var jwtAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        jwtAuthoritiesConverter.setAuthoritiesClaimName("permissions");
-        jwtAuthoritiesConverter.setAuthorityPrefix("");
+    @Bean
+    @Order(1)
+    public SecurityFilterChain actuatorFilterChain(HttpSecurity http) throws Exception {
+        http.securityMatcher("/actuator/**")
+                .authorizeHttpRequests(ex -> ex
+                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        .anyRequest().authenticated()
+                );
 
-        final var jwtAuthConverter = new JwtAuthenticationConverter();
-        jwtAuthConverter.setJwtGrantedAuthoritiesConverter(jwtAuthoritiesConverter);
+        return http.build();
+    }
 
-        return jwtAuthConverter;
+    @Bean
+    @Order(2)
+    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
+        http.securityMatcher("/**")
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement((session) -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests((authz) -> authz
+                        .requestMatchers(HttpMethod.OPTIONS).permitAll()
+                        .requestMatchers("/webhook/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                        .anyRequest().authenticated()
+                );
+
+        return http.build();
     }
 }

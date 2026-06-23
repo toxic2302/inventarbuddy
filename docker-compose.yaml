@@ -1,0 +1,46 @@
+networks:
+  app-network:
+
+volumes:
+  vault-data:
+
+services:
+  postgres:
+    image: postgres:latest
+    restart: always
+    # set shared memory limit when using docker compose
+    shm_size: 128mb
+    environment:
+      POSTGRES_DB: inventarbuddy
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: pass
+    ports:
+      - "5432:5432"
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8082:8080
+
+  # Hashicorp Vault (Dev Mode with Persistence
+  vault:
+    image: hashicorp/vault:2.0
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: dev-root-token
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+      VAULT_ADDR: http://127.0.0.1:8200
+    volumes:
+      - vault-data:/vault/data
+      - ./.docker/vault-init.sh:/vault-init.sh:ro
+      - ./.docker/env-credentials.local:/vault/config/env-credentials.local:ro
+    entrypoint: [ "/bin/sh", "/vault-init.sh" ]
+    healthcheck:
+      test: [ "CMD", "vault", "status" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
