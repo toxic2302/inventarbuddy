@@ -6,7 +6,7 @@ volumes:
 
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:17.10
     restart: always
     # set shared memory limit when using docker compose
     shm_size: 128mb
@@ -22,6 +22,17 @@ services:
     restart: always
     ports:
       - 8082:8080
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2.4
+    command: start-dev
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
 
   # Hashicorp Vault (Dev Mode with Persistence
   vault:
