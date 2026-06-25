@@ -21,4 +21,3 @@ CREATE TABLE revinfo
 -- changeset floriankolb:1781304945771-7
 ALTER TABLE revchanges
     ADD CONSTRAINT fk_revchanges_on_default_tracking_modified_entities_changelog FOREIGN KEY (rev) REFERENCES revinfo (rev);
-

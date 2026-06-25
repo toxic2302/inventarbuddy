@@ -7,5 +7,5 @@
     <includeAll path="db/changelog"/>
 
     <!-- dummy data (Needs to stay at the bottom -->
-    <!--<includeAll path="db/data"/>-->
+    <includeAll path="db/data"/>
 </databaseChangeLog>
