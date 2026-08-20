@@ -11,12 +11,7 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest
 class InventarbuddyApplicationTests {
 
-    public InventarbuddyApplicationTests() {
-
+    @Test
+    void contextLoads() {
     }
-
-  @Test
-  void contextLoads() {
-  }
-
 }
