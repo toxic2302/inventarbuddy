@@ -1,48 +1,64 @@
 package de.toxic2302.inventarbuddy.base;
 
-import tools.jackson.databind.ObjectMapper;
+import static org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO;
+
 import de.toxic2302.inventarbuddy.config.TestSecurityConfig;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.RequestPostProcessor;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.web.reactive.server.WebTestClient;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
+@ExtendWith(SpringExtension.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
 @ActiveProfiles("test")
-@SpringBootTest
-@AutoConfigureMockMvc
 @Import(TestSecurityConfig.class)
+@Transactional
 public abstract class BaseIntegrationTest {
 
-    @Autowired
-    protected MockMvc mockMvc;
+    @Value("${spring.mvc.servlet.path:}")
+    protected String basePath;
 
-    @Autowired
-    protected ObjectMapper objectMapper;
+    protected WebTestClient webTestClient;
 
-    protected static RequestPostProcessor jwt() {
-        return jwtWithSubject(UUID.randomUUID().toString(), List.of("USER"));
+    protected WebTestClient adminWebTestClient;
+
+    protected WebTestClient anonymousWebTestClient;
+
+    @LocalServerPort
+    private int port;
+
+    @BeforeEach
+    void initWebTestClients() {
+        WebTestClient baseClient = WebTestClient.bindToServer()
+                .baseUrl("http://localhost:" + port)
+                .build();
+
+        this.webTestClient = createAuthenticatedClient(baseClient, TestSecurityConfig.USER_TOKEN);
+
+        this.adminWebTestClient = createAuthenticatedClient(baseClient, TestSecurityConfig.ADMIN_TOKEN);
+
+        this.anonymousWebTestClient = baseClient.mutate()
+                .defaultHeader(HttpHeaders.ACCEPT_LANGUAGE, "en")
+                .build();
     }
 
-    protected static RequestPostProcessor jwt(String... roles) {
-        return jwtWithSubject(UUID.randomUUID().toString(), List.of(roles));
+    protected String addBaseUrl(String path) {
+        return basePath + path;
     }
 
-    protected static RequestPostProcessor jwtWithSubject(String subject, List<String> roles) {
-        return SecurityMockMvcRequestPostProcessors.jwt()
-                .jwt(builder -> builder
-                        .subject(subject)
-                        .claim("email", "test@example.com")
-                        .claim("given_name", "Test")
-                        .claim("family_name", "User")
-                        .claim("realm_access", Map.of("roles", roles))
-                );
+    private WebTestClient createAuthenticatedClient(WebTestClient baseClient, String token) {
+        return baseClient.mutate()
+                .defaultHeader(HttpHeaders.ACCEPT_LANGUAGE, "en")
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .build();
     }
 }
