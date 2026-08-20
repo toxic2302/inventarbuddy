@@ -6,10 +6,12 @@ on:
   pull_request:
     branches: [ "main", "master" ]
 
+permissions:
+    contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
-
     services:
       postgres:
         image: postgres:latest
@@ -24,7 +26,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     steps:
     - uses: actions/checkout@v4
 
@@ -49,3 +50,35 @@ jobs:
         DATABASE_PASSWORD: pass
         # Additional settings to ensure tests run smoothly
         SPRING_DOCKER_COMPOSE_ENABLED: false
+
+    - name: Generate JaCoCo Badge
+      id: jacoco
+      uses: cicirello/jacoco-badge-generator@v2
+      with:
+       generate-branches-badge: true
+       jacoco-csv-file: target/site/jacoco/jacoco.csv
+       badges-directory: .github/badges
+
+    - name: Checkout badges branch
+      run: |
+           git fetch origin badges
+           git worktree add /tmp/badges-branch badges
+
+    - name: Copy badges into worktree
+      run: |
+           mkdir -p /tmp/badges-branch/.github/badges
+           cp .github/badges/*.svg /tmp/badges-branch/.github/badges/
+
+    - name: Log coverage percentage
+      run: |
+           echo "Coverage: ${{ steps.jacoco.outputs.coverage }}"
+           echo "Branch coverage: ${{ steps.jacoco.outputs.branches }}"
+
+    - name: Commit and push badges
+      working-directory: /tmp/badges-branch
+      run: |
+           git config user.name "github-actions[bot]"
+           git config user.email "github-actions[bot]@users.noreply.github.com"
+           git add .github/badges/*.svg
+           git diff --staged --quiet || git commit -m "Update coverage badges [skip ci]"
+           git push origin badges

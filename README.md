@@ -1,6 +1,18 @@
+![Coverage](https://raw.githubusercontent.com/toxic2302/inventarbuddy/badges/.github/badges/jacoco.svg)
+![Branch Coverage](https://raw.githubusercontent.com/toxic2302/inventarbuddy/badges/.github/badges/branches.svg)
+
 # Inventarbuddy
 
 Inventarbuddy is a Spring Boot application designed for inventory management. It provides a robust backend with integrated secret management, database migrations, and API documentation.
+
+![Static Badge](https://img.shields.io/badge/springboot-logo?style=for-the-badge&logo=springboot&labelColor=black)
+![Static Badge](https://img.shields.io/badge/postgresql-logo?style=for-the-badge&logo=postgresql&labelColor=white)
+![Static Badge](https://img.shields.io/badge/keycloak-logo?style=for-the-badge&logo=keycloak&labelColor=black)
+![Static Badge](https://img.shields.io/badge/liquibase-logo?style=for-the-badge&logo=liquibase&labelColor=black)
+![Static Badge](https://img.shields.io/badge/hashicorp-logo?style=for-the-badge&logo=hashicorp&labelColor=black)
+![Static Badge](https://img.shields.io/badge/docker-logo?style=for-the-badge&logo=docker&labelColor=black)
+![Static Badge](https://img.shields.io/badge/apachemaven-logo?style=for-the-badge&logo=apachemaven&labelColor=black)
+![Static Badge](https://img.shields.io/badge/swagger-logo?style=for-the-badge&logo=swagger&labelColor=black)
 
 ## Tech Stack
 
