@@ -88,11 +88,11 @@ The API is documented using Swagger UI. Due to the configured servlet path, the 
 ### Profiles
 The application supports different profiles:
 - `local`: Default profile for local development.
-- `dev`, `stage`, `prod`: Profiles for different environments.
+- `stage`, `prod`: Profiles for the self-deployed environments.
 
 To run with a specific profile:
 ```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+./mvnw spring-boot:run -Dspring-boot.run.profiles=stage
 ```
 
 ### Database Migrations
@@ -105,3 +105,65 @@ JaCoCo is integrated for code coverage reports. You can generate a report by run
 ./mvnw test
 ```
 The report will be available in `target/site/jacoco/index.html`.
+
+## Self-Hosted Deployment (stage & prod)
+
+The application can be built as a Docker image and self-deployed on your own server. A single
+image is used for both environments; the active profile is selected at runtime via the
+`SPRING_PROFILES_ACTIVE` environment variable.
+
+### 1. Build & Push the Image
+
+The GitHub Actions pipeline (`.github/workflows/maven.yml`) builds and pushes the image to
+GitHub Container Registry (`ghcr.io`) automatically:
+- Push to `stage` branch &rarr; tag `stage`
+- Push to `main`/`master` branch &rarr; tag `prod`
+
+To build it manually:
+```bash
+docker build -t ghcr.io/<owner>/inventarbuddy:stage .
+```
+
+### 2. Configure the Server
+
+Copy `docker-compose.prod.yaml` plus `.docker/nginx` onto the server and create an environment
+file from the provided examples:
+```bash
+cp .env.stage.example .env.stage   # or .env.prod.example -> .env.prod
+```
+Fill in the real database, Vault, Keycloak and domain values.
+
+### 3. Start the Stack
+
+```bash
+docker compose -f docker-compose.prod.yaml --env-file .env.stage up -d
+```
+
+`docker-compose.prod.yaml` starts the application container together with an `nginx` reverse
+proxy that terminates TLS and a `certbot` sidecar that issues/renews the Let's Encrypt
+certificate for the configured `DOMAIN`. On the very first start, request the initial
+certificate once nginx is reachable on port 80:
+```bash
+docker compose -f docker-compose.prod.yaml --env-file .env.stage run --rm certbot certonly \
+  --webroot -w /var/www/certbot -d <domain> --email <mail> --agree-tos --no-eff-email
+```
+
+### 4. Rolling Out Updates
+
+```bash
+docker compose -f docker-compose.prod.yaml --env-file .env.prod pull app
+docker compose -f docker-compose.prod.yaml --env-file .env.prod up -d app
+```
+
+### 5. CI/CD (GitHub Actions)
+
+`.github/workflows/maven.yml` automatically builds & pushes the image after a successful test run
+and (if configured) deploys it via SSH. For automatic deployment, configure the following
+repository secrets (per GitHub `stage`/`prod` [Environment](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment)):
+- `DEPLOY_HOST` – SSH host of the server
+- `DEPLOY_USER` – SSH user
+- `DEPLOY_SSH_KEY` – private SSH key with access to the server
+- `DEPLOY_PATH` – path on the server containing `docker-compose.prod.yaml` and the matching `.env.stage`/`.env.prod`
+
+Without these secrets configured, the deploy job will simply fail and the image still gets
+published to `ghcr.io`, so a manual rollout (see step 4) is always possible.

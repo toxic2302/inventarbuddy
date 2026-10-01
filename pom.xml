@@ -228,14 +228,6 @@
             </properties>
         </profile>
 
-        <!-- Dev -->
-        <profile>
-            <id>Dev</id>
-            <properties>
-                <spring.profiles.active>dev</spring.profiles.active>
-            </properties>
-        </profile>
-
         <!-- Stage -->
         <profile>
             <id>Stage</id>

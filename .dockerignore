@@ -1,0 +1,15 @@
+target/
+.idea/
+*.iml
+*.iws
+*.ipr
+.git/
+.github/
+.junie/
+.mvn/wrapper/maven-wrapper.jar
+docker-compose*.yaml
+.docker/
+*.md
+HELP.md
+local.env
+.env*

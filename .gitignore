@@ -35,3 +35,7 @@ build/
 ### AI
 .junie/memory/
 .junie/plans/
+
+### Deployment
+.env.stage
+.env.prod

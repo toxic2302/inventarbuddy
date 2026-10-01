@@ -1,0 +1,75 @@
+# ==============================================================
+# = Self-Deploy Stack (stage & prod)
+# ==============================================================
+# Wird direkt auf dem Zielserver verwendet. Das aktive Spring-Profil
+# (stage/prod) wird ausschliesslich über die Umgebungsvariable
+# SPRING_PROFILES_ACTIVE gesteuert - es muss kein eigenes Image pro
+# Umgebung gebaut werden.
+#
+# Benoetigte Konfiguration kommt aus einer .env Datei
+# (siehe .env.stage.example / .env.prod.example) neben dieser Datei.
+#
+# Start:
+#   docker compose -f docker-compose.prod.yaml --env-file .env.stage up -d
+#   docker compose -f docker-compose.prod.yaml --env-file .env.prod up -d
+
+networks:
+  app-network:
+
+volumes:
+  certbot-www:
+  certbot-conf:
+
+services:
+  app:
+    image: ${APP_IMAGE}
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      VAULT_HOST: ${VAULT_HOST}
+      VAULT_PORT: ${VAULT_PORT}
+      VAULT_SCHEME: ${VAULT_SCHEME}
+      VAULT_ROLE_ID: ${VAULT_ROLE_ID}
+      VAULT_SECRET_ID: ${VAULT_SECRET_ID}
+      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI}
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "wget", "-qO-", "http://localhost:8080/inventarbuddy/actuator/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      DOMAIN: ${DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./.docker/nginx/templates:/etc/nginx/templates:ro
+      - certbot-conf:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    networks:
+      - app-network
+
+  # Einmalige/periodische Zertifikatsausstellung bzw. -erneuerung (Let's Encrypt).
+  # Erstmaliger Aufruf (nachdem nginx laeuft und Port 80 erreichbar ist):
+  #   docker compose -f docker-compose.prod.yaml run --rm certbot certonly \
+  #     --webroot -w /var/www/certbot -d ${DOMAIN} --email <mail> --agree-tos --no-eff-email
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - certbot-conf:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    entrypoint: >
+      sh -c "trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done"
+    networks:
+      - app-network
