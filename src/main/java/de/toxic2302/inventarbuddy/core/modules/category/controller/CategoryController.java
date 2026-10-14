@@ -1,6 +1,7 @@
 package de.toxic2302.inventarbuddy.core.modules.category.controller;
 
-import de.toxic2302.inventarbuddy.core.modules.category.dto.CategoryDto;
+import de.toxic2302.inventarbuddy.core.modules.category.dto.CategoryChildDto;
+import de.toxic2302.inventarbuddy.core.modules.category.dto.CategoryParentDto;
 import de.toxic2302.inventarbuddy.core.modules.category.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -30,7 +31,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "200", description = "Category found by id"),
             @ApiResponse(responseCode = "500", description = "Unexpected exception")})
     @PostMapping("/{id}")
-    public ResponseEntity<CategoryDto> getCategoryById(@PathVariable String id) {
+    public ResponseEntity<CategoryParentDto> getCategoryById(@PathVariable String id) {
         return ResponseEntity.ok().body(categoryService.getCategory(UUID.fromString(id)));
     }
 
@@ -39,7 +40,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "200", description = "Categories found by user"),
             @ApiResponse(responseCode = "500", description = "Unexpected exception")})
     @GetMapping()
-    public ResponseEntity<List<CategoryDto>> getAllCategories() {
+    public ResponseEntity<List<CategoryParentDto>> getAllCategories() {
         return ResponseEntity.ok().body(categoryService.getAllCategoriesByUser());
     }
 
@@ -48,7 +49,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "200", description = "Category created"),
             @ApiResponse(responseCode = "500", description = "Unexpected exception")})
     @PostMapping()
-    public ResponseEntity<CategoryDto> createCategory(@Valid @RequestBody CategoryDto categoryDto) {
+    public ResponseEntity<CategoryChildDto> createCategory(@Valid @RequestBody CategoryChildDto categoryDto) {
         return ResponseEntity.ok().body(categoryService.createCategory(categoryDto));
     }
 
@@ -57,7 +58,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "200", description = "Category updated"),
             @ApiResponse(responseCode = "500", description = "Unexpected exception")})
     @PostMapping("/update")
-    public ResponseEntity<CategoryDto> updateCategory(@Valid @RequestBody CategoryDto categoryDto) {
+    public ResponseEntity<CategoryChildDto> updateCategory(@Valid @RequestBody CategoryChildDto categoryDto) {
         return ResponseEntity.ok().body(categoryService.updateCategory(categoryDto));
     }
 

@@ -1,7 +1,7 @@
 package de.toxic2302.inventarbuddy.security;
 
 import de.toxic2302.inventarbuddy.base.BaseIntegrationTest;
-import de.toxic2302.inventarbuddy.core.modules.category.dto.CategoryDto;
+import de.toxic2302.inventarbuddy.core.modules.category.dto.CategoryChildDto;
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +27,7 @@ class SecurityTest extends BaseIntegrationTest {
 
     @Test
     void anonymousUser_shouldGetUnauthorizedOnCreateCategory() {
-        CategoryDto request = new CategoryDto(null, "Test", "Beschreibung");
+        CategoryChildDto request = new CategoryChildDto(null, "Test", "Beschreibung", null);
 
         anonymousWebTestClient.post()
                 .uri(addBaseUrl("/categories"))
@@ -46,7 +46,7 @@ class SecurityTest extends BaseIntegrationTest {
 
     @Test
     void anonymousUser_shouldGetUnauthorizedOnUpdateCategory() {
-        CategoryDto request = new CategoryDto("00000000-0000-0000-0000-000000000001", "Updated", "Beschreibung");
+        CategoryChildDto request = new CategoryChildDto("00000000-0000-0000-0000-000000000001", "Updated", "Beschreibung", null);
 
         anonymousWebTestClient.post()
                 .uri(addBaseUrl("/categories/update"))

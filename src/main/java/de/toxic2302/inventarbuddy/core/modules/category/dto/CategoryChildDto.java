@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record CategoryDto(
+public record CategoryChildDto(
         String id,
 
         @NotBlank(message = "Name darf nicht leer sein")
@@ -13,6 +13,8 @@ public record CategoryDto(
         String name,
 
         @Size(max = 1000)
-        String description
+        String description,
+
+        String parentId
 ) {
 }

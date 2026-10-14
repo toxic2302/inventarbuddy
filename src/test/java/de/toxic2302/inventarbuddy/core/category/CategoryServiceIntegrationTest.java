@@ -3,7 +3,8 @@ package de.toxic2302.inventarbuddy.core.category;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import de.toxic2302.inventarbuddy.base.BaseIntegrationTest;
-import de.toxic2302.inventarbuddy.core.modules.category.dto.CategoryDto;
+import de.toxic2302.inventarbuddy.core.modules.category.dto.CategoryChildDto;
+import de.toxic2302.inventarbuddy.core.modules.category.dto.CategoryParentDto;
 import de.toxic2302.inventarbuddy.core.modules.category.entity.Category;
 import de.toxic2302.inventarbuddy.core.modules.category.repository.CategoryRepository;
 import de.toxic2302.inventarbuddy.core.modules.user.entity.User;
@@ -48,14 +49,14 @@ class CategoryServiceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void createCategory_shouldPersistAndReturnCategory() {
-        CategoryDto request = new CategoryDto(null, "Elektronik", "Elektronische Geräte");
+        CategoryChildDto request = new CategoryChildDto(null, "Elektronik", "Elektronische Geräte", null);
 
         webTestClient.post()
                 .uri(addBaseUrl("/categories"))
                 .bodyValue(request)
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(CategoryDto.class)
+                .expectBody(CategoryChildDto.class)
                 .value(response -> {
                     assertThat(response.id()).isNotNull();
                     assertThat(response.name()).isEqualTo("Elektronik");
@@ -69,18 +70,17 @@ class CategoryServiceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void getAllCategories_shouldReturnCategoriesForAuthenticatedUser() {
-        Category category1 = new Category("Elektronik", "Elektronische Geräte", testUser);
-        Category category2 = new Category("Möbel", "Möbelstücke", testUser);
-        categoryRepository.saveAll(List.of(category1, category2));
+        createCategory("Elektronik", "Elektronische Geräte", null);
+        createCategory("Möbel", "Möbelstücke", null);
 
         webTestClient.get()
                 .uri(addBaseUrl("/categories"))
                 .exchange()
                 .expectStatus().isOk()
-                .expectBodyList(CategoryDto.class)
+                .expectBodyList(CategoryParentDto.class)
                 .hasSize(2)
                 .value(categories -> {
-                    assertThat(categories).extracting(CategoryDto::name)
+                    assertThat(categories).extracting(CategoryParentDto::name)
                             .containsExactlyInAnyOrder("Elektronik", "Möbel");
                 });
     }
@@ -91,20 +91,19 @@ class CategoryServiceIntegrationTest extends BaseIntegrationTest {
                 .uri(addBaseUrl("/categories"))
                 .exchange()
                 .expectStatus().isOk()
-                .expectBodyList(CategoryDto.class)
+                .expectBodyList(CategoryParentDto.class)
                 .hasSize(0);
     }
 
     @Test
     void getCategoryById_shouldReturnCategory() {
-        Category category = new Category("Elektronik", "Elektronische Geräte", testUser);
-        final Category savedCategory = categoryRepository.save(category);
+        final Category savedCategory = createCategory("Elektronik", "Elektronische Geräte", null);
 
         webTestClient.post()
                 .uri(addBaseUrl("/categories/" + savedCategory.getId()))
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(CategoryDto.class)
+                .expectBody(CategoryParentDto.class)
                 .value(response -> {
                     assertThat(response.id()).isEqualTo(savedCategory.getId().toString());
                     assertThat(response.name()).isEqualTo("Elektronik");
@@ -114,17 +113,16 @@ class CategoryServiceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void updateCategory_shouldUpdateAndReturnCategory() {
-        Category category = new Category("Elektronik", "Elektronische Geräte", testUser);
-        final Category savedCategory = categoryRepository.save(category);
+        final Category savedCategory = createCategory("Elektronik", "Elektronische Geräte", null);
 
-        CategoryDto updateRequest = new CategoryDto(savedCategory.getId().toString(), "Elektronik Updated", "Neue Beschreibung");
+        CategoryChildDto updateRequest = new CategoryChildDto(savedCategory.getId().toString(), "Elektronik Updated", "Neue Beschreibung", null);
 
         webTestClient.post()
                 .uri(addBaseUrl("/categories/update"))
                 .bodyValue(updateRequest)
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(CategoryDto.class)
+                .expectBody(CategoryChildDto.class)
                 .value(response -> {
                     assertThat(response.name()).isEqualTo("Elektronik Updated");
                     assertThat(response.description()).isEqualTo("Neue Beschreibung");
@@ -133,8 +131,7 @@ class CategoryServiceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void deleteCategory_shouldRemoveCategory() {
-        Category category = new Category("Elektronik", "Elektronische Geräte", testUser);
-        final Category savedCategory = categoryRepository.save(category);
+        final Category savedCategory = createCategory("Elektronik", "Elektronische Geräte", null);
 
         webTestClient.delete()
                 .uri(addBaseUrl("/categories/delete/" + savedCategory.getId()))
@@ -146,7 +143,7 @@ class CategoryServiceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void createCategory_shouldReturn401WhenNotAuthenticated() {
-        CategoryDto request = new CategoryDto(null, "Elektronik", "Elektronische Geräte");
+        CategoryChildDto request = new CategoryChildDto(null, "Elektronik", "Elektronische Geräte", null);
 
         anonymousWebTestClient.post()
                 .uri(addBaseUrl("/categories"))
@@ -157,12 +154,91 @@ class CategoryServiceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void createCategory_shouldReturn400WhenNameIsBlank() {
-        CategoryDto request = new CategoryDto(null, "", "Beschreibung");
+        CategoryChildDto request = new CategoryChildDto(null, "", "Beschreibung", null);
 
         webTestClient.post()
                 .uri(addBaseUrl("/categories"))
                 .bodyValue(request)
                 .exchange()
                 .expectStatus().isBadRequest();
+    }
+
+    @Test
+    void createCategory_withParent_shouldLinkChildToParent() {
+        final Category parent = createCategory("Elektronik", null, null);
+        CategoryChildDto request = new CategoryChildDto(null, "Handys", "Mobiltelefone", parent.getId().toString());
+
+        webTestClient.post()
+                .uri(addBaseUrl("/categories"))
+                .bodyValue(request)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(CategoryChildDto.class)
+                .value(response -> assertThat(response.parentId()).isEqualTo(parent.getId().toString()));
+
+        assertThat(categoryRepository.findById(parent.getId()).orElseThrow().getChildren())
+                .extracting(Category::getName)
+                .containsExactly("Handys");
+    }
+
+    @Test
+    void getAllCategories_shouldReturnOnlyRootCategoriesWithChildren() {
+        final Category parent = createCategory("Elektronik", null, null);
+        createCategory("Handys", null, parent);
+
+        webTestClient.get()
+                .uri(addBaseUrl("/categories"))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(CategoryParentDto.class)
+                .hasSize(1)
+                .value(categories -> {
+                    assertThat(categories.getFirst().name()).isEqualTo("Elektronik");
+                    assertThat(categories.getFirst().children()).extracting(CategoryParentDto::name)
+                            .containsExactly("Handys");
+                });
+    }
+
+    @Test
+    void deleteCategory_shouldDeleteChildCategoryOnFirstCall() {
+        final Category parent = createCategory("Elektronik", null, null);
+        final Category child = createCategory("Handys", null, parent);
+
+        webTestClient.delete()
+                .uri(addBaseUrl("/categories/delete/" + child.getId()))
+                .exchange()
+                .expectStatus().isOk();
+
+        assertThat(categoryRepository.findById(child.getId())).isEmpty();
+        assertThat(categoryRepository.findById(parent.getId())).isPresent();
+        assertThat(categoryRepository.findById(parent.getId()).orElseThrow().getChildren()).isEmpty();
+    }
+
+    @Test
+    void deleteCategory_shouldDeleteParentWithChildrenOnFirstCall() {
+        final Category parent = createCategory("Elektronik", null, null);
+        final Category child = createCategory("Handys", null, parent);
+        final Category grandChild = createCategory("Smartphones", null, child);
+
+        webTestClient.delete()
+                .uri(addBaseUrl("/categories/delete/" + parent.getId()))
+                .exchange()
+                .expectStatus().isOk();
+
+        assertThat(categoryRepository.findById(parent.getId())).isEmpty();
+        assertThat(categoryRepository.findById(child.getId())).isEmpty();
+        assertThat(categoryRepository.findById(grandChild.getId())).isEmpty();
+    }
+
+    private Category createCategory(String name, String description, Category parent) {
+        final Category category = new Category();
+        category.setName(name);
+        category.setDescription(description);
+        category.setUser(testUser);
+        if (parent != null) {
+            final Category managedParent = categoryRepository.findById(parent.getId()).orElseThrow();
+            managedParent.addChild(category);
+        }
+        return categoryRepository.save(category);
     }
 }
