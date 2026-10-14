@@ -11,4 +11,6 @@ import org.springframework.stereotype.Repository;
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     List<Category> findAllByUser(User user);
+
+    List<Category> findAllByUserAndParentIsNull(User user);
 }
