@@ -54,6 +54,13 @@ src/main/java/de/toxic2302/inventarbuddy/
 │       │   ├── mapper/
 │       │   ├── repository/
 │       │   └── service/
+│       ├── media/                 # Media-Modul (Bilder und PDFs, mit Item verknüpft)
+│       │   ├── controller/
+│       │   ├── dto/
+│       │   ├── entity/
+│       │   ├── mapper/
+│       │   ├── repository/
+│       │   └── service/
 │       ├── storage/               # Storage-Modul (hierarchische Lagerorte)
 │       │   ├── controller/
 │       │   ├── dto/

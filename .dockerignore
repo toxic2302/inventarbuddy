@@ -1,0 +1,14 @@
+.git
+.github
+.idea
+.aiassistant
+.junie
+.docker
+target
+*.iml
+local.env
+docker-compose.local.yaml
+docker-compose.stage.yaml
+Dockerfile
+README.md
+Agents.md
