@@ -8,7 +8,7 @@ apply: always
 
 - Java 25
 - Maven (oder `./mvnw` verwenden)
-- Docker (für lokale Infrastruktur via `docker-compose.yaml`)
+- Docker (für lokale Infrastruktur via `../../docker-compose.local.yaml`)
 - Umgebungsvariablen: siehe `local.env`
 
 ### Befehle

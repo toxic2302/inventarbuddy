@@ -52,6 +52,13 @@ src/main/java/de/toxic2302/inventarbuddy/
 │       │   ├── mapper/
 │       │   ├── repository/
 │       │   └── service/
+│       ├── media/                 # Media-Modul (Bilder und PDFs, mit Item verknüpft)
+│       │   ├── controller/
+│       │   ├── dto/
+│       │   ├── entity/
+│       │   ├── mapper/
+│       │   ├── repository/
+│       │   └── service/
 │       └── user/                  # User-Modul
 │           ├── entity/
 │           ├── repository/
@@ -86,7 +93,8 @@ Jedes Fachmodul unter `core/modules/` folgt einer einheitlichen Schichtenarchite
 - **DDL-Modus**: `validate` – Hibernate validiert nur das Schema, erstellt oder ändert es nicht.
 - **Migrationen**: Liquibase verwaltet alle Schema-Änderungen unter `src/main/resources/db/`.
   - Master-Changelog: `db/db.changelog-master.xml`
-  - Changesets liegen in `db/changelog/` organisiert nach Nummern (z.B. `06/01-init-changelog.sql`).
+  - Changesets liegen in `db/changelog/`. Die Unterordner sind der **Monat** (zweistellig, z.B. `10`), in dem die Änderung erstellt wird; die Dateien darin werden fortlaufend nummeriert (z.B. `10/01-add-parent-to-categories-table.sql`, danach `10/02-add-items-table.sql`).
+  - Für **neue Entitäten, die noch nicht im System (z.B. in Produktion) sind**, wird kein zusätzlicher Changelog angelegt, sondern der vorhandene Changelog der Entität angepasst. Neue Changesets (`ALTER TABLE`) sind nur für bereits ausgerollte Tabellen nötig; bereits ausgerollte Changesets dürfen nicht verändert werden (Checksum-Fehler).
 - **Naming-Strategy**: Benutzerdefiniert über `de.toxic2302.inventarbuddy.base.config.NamingStrategy`.
 
 ## Build & Run
@@ -95,7 +103,7 @@ Jedes Fachmodul unter `core/modules/` folgt einer einheitlichen Schichtenarchite
 
 - Java 25
 - Maven (oder `./mvnw` verwenden)
-- Docker (für lokale Infrastruktur via `docker-compose.yaml`)
+- Docker (für lokale Infrastruktur via `docker-compose.local.yaml`)
 - Umgebungsvariablen: siehe `local.env`
 
 ### Befehle
@@ -136,6 +144,8 @@ Jedes Fachmodul unter `core/modules/` folgt einer einheitlichen Schichtenarchite
 ## Wichtige Hinweise für Agenten
 
 1. **Keine Schema-Änderungen via Hibernate** – Alle DB-Änderungen müssen als Liquibase-Changesets angelegt werden.
+   - Der Changelog-Unterordner entspricht dem aktuellen Monat; die Dateinummer ist die nächste freie im Ordner (z.B. `10/02-...`).
+   - Entitäten, die noch nicht im System sind, werden im vorhandenen Changelog angepasst – kein neuer Changelog.
 2. **Entitäten immer von `BaseEntity` erben lassen.**
 3. **MapStruct für Mappings verwenden** – keine manuellen Mapper schreiben.
 4. **Lombok für Boilerplate nutzen** – Getter/Setter/Konstruktoren nicht manuell anlegen.

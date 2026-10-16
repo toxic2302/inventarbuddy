@@ -43,7 +43,7 @@ cd inventarbuddy
 
 ### 2. Start Infrastructure
 
-The project includes a `docker-compose.yaml` file to set up the necessary services (PostgreSQL, Vault, Adminer).
+The project includes a `docker-compose.local.yaml` file to set up the necessary services (PostgreSQL, Vault, Adminer).
 
 ```bash
 docker-compose up -d
@@ -82,6 +82,22 @@ The API is documented using Swagger UI. Due to the configured servlet path, the 
 
 - **Swagger UI:** [http://localhost:8080/inventarbuddy/swagger-ui/index.html](http://localhost:8080/inventarbuddy/swagger-ui/index.html)
 - **OpenAPI Docs:** `http://localhost:8080/inventarbuddy/v3/api-docs`
+
+## Deployment with seelf
+
+The backend can be deployed as **stage** deployment with [seelf](https://yuukanoo.github.io/seelf/). seelf picks up `docker-compose.stage.yaml` (preferred over `docker-compose.local.yaml`, which only contains the local infrastructure), builds the `Dockerfile` (Maven profile `Stage`, Spring profile `stage`) and exposes the service with the published port `8080`.
+
+1. Create a target in seelf with the URL `https://inventarbuddy.de` (certificates are issued automatically because of `https`).
+2. Create an application named `stage` pointing to this repository (or upload the project as archive). The application name determines the subdomain, so the backend is served at `https://stage.inventarbuddy.de`.
+3. Set the following environment variables on the application:
+   - `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD`
+   - `KEYCLOAK_ISSUER_URI` (e.g. `https://auth.example.com/realms/inventarbuddy`)
+   - `VAULT_HOST`, `VAULT_ROLE_ID`, `VAULT_SECRET_ID` (optional: `VAULT_PORT`, `VAULT_SCHEME`)
+4. Make sure a DNS record for `stage.inventarbuddy.de` (or a wildcard `*.inventarbuddy.de`) points to the seelf server, then deploy. The API is available at `https://stage.inventarbuddy.de/inventarbuddy`.
+
+To deploy another stage, override the build arg `MAVEN_PROFILE` in `docker-compose.stage.yaml` (e.g. `Prod`).
+
+PostgreSQL, Keycloak and Vault must be reachable from the container (they are not part of the seelf deployment).
 
 ## Development
 

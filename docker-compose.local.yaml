@@ -34,7 +34,7 @@ services:
     depends_on:
       - postgres
 
-  # Hashicorp Vault (Dev Mode with Persistence
+  # Hashicorp Vault
   vault:
     image: hashicorp/vault:2.0
     cap_add:

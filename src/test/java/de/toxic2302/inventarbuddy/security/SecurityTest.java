@@ -56,6 +56,22 @@ class SecurityTest extends BaseIntegrationTest {
     }
 
     @Test
+    void anonymousUser_shouldAccessHealth() {
+        anonymousWebTestClient.get()
+                .uri(addBaseUrl("/actuator/health"))
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @Test
+    void anonymousUser_shouldGetUnauthorizedOnOtherActuatorEndpoints() {
+        anonymousWebTestClient.get()
+                .uri(addBaseUrl("/actuator/info"))
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    @Test
     void adminUser_shouldAccessCategories() {
         adminWebTestClient.get()
                 .uri(addBaseUrl("/categories"))
