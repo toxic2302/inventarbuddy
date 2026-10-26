@@ -83,21 +83,21 @@ The API is documented using Swagger UI. Due to the configured servlet path, the 
 - **Swagger UI:** [http://localhost:8080/inventarbuddy/swagger-ui/index.html](http://localhost:8080/inventarbuddy/swagger-ui/index.html)
 - **OpenAPI Docs:** `http://localhost:8080/inventarbuddy/v3/api-docs`
 
-## Deployment with seelf
+## Deployment with Coolify
 
-The backend can be deployed as **stage** deployment with [seelf](https://yuukanoo.github.io/seelf/). seelf picks up `docker-compose.stage.yaml` (preferred over `docker-compose.local.yaml`, which only contains the local infrastructure), builds the `Dockerfile` (Maven profile `Stage`, Spring profile `stage`) and exposes the service with the published port `8080`.
+The backend can be deployed with [Coolify](https://coolify.io/) using the **Docker Compose** build pack and the file `docker-compose.stage.yaml`. The compose file does not publish any host port; Coolify's proxy routes the domain to the exposed container port `8080` and handles HTTPS.
 
-1. Create a target in seelf with the URL `https://inventarbuddy.de` (certificates are issued automatically because of `https`).
-2. Create an application named `stage` pointing to this repository (or upload the project as archive). The application name determines the subdomain, so the backend is served at `https://stage.inventarbuddy.de`.
-3. Set the following environment variables on the application:
+1. Create a new resource in Coolify: *Public/Private Repository* → select this repository and branch.
+2. Set the build pack to **Docker Compose** and the *Docker Compose Location* to `/docker-compose.stage.yaml`.
+3. Assign your domain to the `backend` service (e.g. `https://stage.inventarbuddy.de:8080`). The port suffix tells the proxy which container port to use.
+4. Set the following environment variables (required ones are marked by Coolify):
    - `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD`
    - `KEYCLOAK_ISSUER_URI` (e.g. `https://auth.example.com/realms/inventarbuddy`)
    - `VAULT_HOST`, `VAULT_ROLE_ID`, `VAULT_SECRET_ID` (optional: `VAULT_PORT`, `VAULT_SCHEME`)
-4. Make sure a DNS record for `stage.inventarbuddy.de` (or a wildcard `*.inventarbuddy.de`) points to the seelf server, then deploy. The API is available at `https://stage.inventarbuddy.de/inventarbuddy`.
+   - optional: `MAVEN_PROFILE` (`Stage` by default, e.g. `Prod`; selects the Spring profile at build time)
+5. Deploy. The API is available at `https://<your-domain>/inventarbuddy`, the container health check uses `/inventarbuddy/actuator/health`.
 
-To deploy another stage, override the build arg `MAVEN_PROFILE` in `docker-compose.stage.yaml` (e.g. `Prod`).
-
-PostgreSQL, Keycloak and Vault must be reachable from the container (they are not part of the seelf deployment).
+PostgreSQL, Keycloak and Vault must be reachable from the container (they are not part of this deployment). If they run in Coolify as well, use their internal service names or enable *Connect to Predefined Network*.
 
 ## Development
 
